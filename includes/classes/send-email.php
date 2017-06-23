@@ -59,7 +59,7 @@ $email_strings_file_by_client = array(
 
 /** Strings for the "New client created" e-mail */
 $email_strings_new_client = array(
-									'subject'		=> ( defined('EMAILS_CLIENT_BY_USER_USE_SUBJECT_CUSTOM' ) && EMAILS_CLIENT_BY_USER_USE_SUBJECT_CUSTOM == 1 && defined( 'EMAILS_CLIENT_BY_USER_SUBJECT' ) ) ? EMAILS_CLIENT_BY_USER_SUBJECT : __('Welcome to ProjectSend','cftp_admin'),
+									'subject'		=> ( defined('EMAILS_CLIENT_BY_USER_USE_SUBJECT_CUSTOM' ) && EMAILS_CLIENT_BY_USER_USE_SUBJECT_CUSTOM == 1 && defined( 'EMAILS_CLIENT_BY_USER_SUBJECT' ) ) ? EMAILS_CLIENT_BY_USER_SUBJECT : __('Welcome to the K2P FileTool','cftp_admin'),
 									'body'			=> __('A new account was created for you. From now on, you can access the files that have been uploaded under your account using the following credentials:','cftp_admin'),
 									'body2'			=> __('You can log in following this link','cftp_admin'),
 									'body3'			=> __('Please contact the administrator if you need further assistance.','cftp_admin'),
@@ -90,10 +90,10 @@ $email_strings_new_client_self = array(
 
 /** Strings for the "New system user created" e-mail */
 $email_strings_new_user = array(
-									'subject'		=> ( defined('EMAILS_NEW_USER_USE_SUBJECT_CUSTOM' ) && EMAILS_NEW_USER_USE_SUBJECT_CUSTOM == 1 && defined( 'EMAILS_NEW_USER_SUBJECT' ) ) ? EMAILS_NEW_USER_SUBJECT : __('Welcome to ProjectSend','cftp_admin'),
+									'subject'		=> ( defined('EMAILS_NEW_USER_USE_SUBJECT_CUSTOM' ) && EMAILS_NEW_USER_USE_SUBJECT_CUSTOM == 1 && defined( 'EMAILS_NEW_USER_SUBJECT' ) ) ? EMAILS_NEW_USER_SUBJECT : __('Welcome to the K2P FileTool','cftp_admin'),
 									'body'			=> __('A new account was created for you. From now on, you can access the system administrator using the following credentials:','cftp_admin'),
 									'body2'			=> __('Access the system panel here','cftp_admin'),
-									'body3'			=> __('Thank you for using ProjectSend.','cftp_admin'),
+									'body3'			=> __('Thank you for using the K2P FileTool.','cftp_admin'),
 									'label_user'	=> __('Your username','cftp_admin'),
 									'label_pass'	=> __('Your password','cftp_admin')
 								);
