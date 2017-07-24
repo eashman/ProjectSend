@@ -14,7 +14,7 @@ session_start();
  * Current version.
  * Updated only when releasing a new downloadable complete version.
  */
-define('CURRENT_VERSION', 'r885');
+define('CURRENT_VERSION', 'r963');
 
 /**
  * Fix for including external files when on HTTPS.
@@ -28,7 +28,7 @@ define('PROTOCOL', empty($_SERVER['HTTPS'])? 'http' : 'https');
  * - Changes the error_reporting php value
  * - Enables the PDOEX extension (on the database class) to count queries
  */
-define('DEBUG', true);
+define('DEBUG', false);
 
 /**
  * Turn off reporting of PHP errors, warnings and notices.
@@ -228,4 +228,3 @@ if (!defined('DB_DRIVER')) {
  */
 define('LINK_DOC_RECAPTCHA', 'https://developers.google.com/recaptcha/docs/start');
 define('LINK_DOC_GOOGLE_SIGN_IN', 'https://developers.google.com/identity/protocols/OpenIDConnect');
-?>

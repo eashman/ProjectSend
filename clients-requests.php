@@ -24,26 +24,6 @@ include('header.php');
 
 <script type="text/javascript">
 	$(document).ready(function() {
-		$("#do_action").click(function() {
-			var checks = $(".footable-first-column>input:checkbox").serializeArray(); 
-			if (checks.length == 0) { 
-				alert('<?php _e('Please select at least one client to proceed.','cftp_admin'); ?>');
-				return false; 
-			} 
-			else {
-				var action = $('#action').val();
-				if (action == 'delete') {
-					var msg_1 = '<?php _e("You are about to delete",'cftp_admin'); ?>';
-					var msg_2 = '<?php _e("requests. Are you sure you want to continue?",'cftp_admin'); ?>';
-					if (confirm(msg_1+' '+checks.length+' '+msg_2)) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			}
-		});
-		
 		$('.change_all').click(function(e) {
 			e.preventDefault();
 			var target = $(this).data('target');
@@ -57,12 +37,6 @@ include('header.php');
 				var target = $(this).data('client');
 				$(".membership_action[data-client='"+target+"']").prop("checked",false).change();
 			}
-			/*
-			var target = $(this).data('target');
-			var check = $(this).data('check');
-			$("input[data-client='"+target+"']").prop("checked",check).change();
-			check_client(target);
-			*/
 		});
 
 		$('.checkbox_toggle').change(function() {
@@ -76,15 +50,26 @@ include('header.php');
 	});
 </script>
 
-<div id="main">
-	<h2><?php echo $page_title; ?></h2>
-	
+<div class="col-xs-12">
 <?php
+	if (isset($_GET['action'])) {
+		switch ($_GET['action']) {
+			case 'apply':
+				$msg = __('The selected actions were applied.','cftp_admin');
+				echo system_message('ok',$msg);
+				break;
+			case 'delete':
+				$msg = __('The selected clients were deleted.','cftp_admin');
+				echo system_message('ok',$msg);
+				break;
+		}
+	}
+
 	/**
 	 * Apply the corresponding action to the selected clients.
 	 */
 	if ( !empty($_POST) ) {
-		print_array($_POST);
+		//print_array($_POST);
 
 		/** Continue only if 1 or more clients were selected. */
 		if(!empty($_POST['accounts'])) {
@@ -117,15 +102,14 @@ include('header.php');
 						 * 1- Approve or deny account
 						 */
 						$process_account = new ClientActions();
-						$account_arguments = array(
-													'client_id'	=> $client['id'],
-												);
 
+						/** $client['account'] == 1 means approve that account */
 						if ( !empty( $client['account'] ) and $client['account'] == '1' ) {
+							$email_type = 'client_approve';
 							/**
 							 * 1 - Approve account
 							 */
-							$approve = $process_account->client_account_approve( $account_arguments );
+							$approve = $process_account->client_account_approve( $client['id'] );
 							/**
 							 * 2 - Prepare memberships information
 							 */
@@ -139,10 +123,12 @@ include('header.php');
 														);
 						}
 						else {
+							$email_type = 'client_deny';
+
 							/**
 							 * 1 - Deny account
 							 */
-							$deny = $process_account->client_account_deny( $account_arguments );
+							$deny = $process_account->client_account_deny( $client['id'] );
 							/**
 							 * 2 - Deny all memberships
 							 */
@@ -156,35 +142,59 @@ include('header.php');
 						 * 2 - Process memberships requests
 						 */
 						$process_requests	= $process_memberships->group_process_memberships( $memberships_arguments );
+
+						/**
+						 * 3- Send email to the client
+						 */
+						/** Send email */
+						$processed_requests = $process_requests['memberships'];
+						$client_information = get_client_by_id( $client['id'] );
+
+						$notify_client = new PSend_Email();
+						$email_arguments = array(
+														'type'			=> $email_type,
+														'username'		=> $client_information['username'],
+														'name'			=> $client_information['name'],
+														'addresses'		=> $client_information['email'],
+														'memberships'	=> $processed_requests,
+														'preview'		=> true,
+													);
+						$notify_send = $notify_client->psend_send_email($email_arguments);
 					}
 
-					$msg = __('The selected actions were applied.','cftp_admin');
-					echo system_message('ok',$msg);
 					$log_action_number = 38;
 					break;
 				case 'delete':
 					foreach ($selected_clients as $client) {
 						$this_client = new ClientActions();
-						$delete_client = $this_client->delete_client($client);
-						/** TODO: delete membership requests */
+						$delete_client = $this_client->delete_client($client['id']);
 					}
 					
-					$msg = __('The selected clients were deleted.','cftp_admin');
-					echo system_message('ok',$msg);
 					$log_action_number = 17;
+					break;
+				default:
 					break;
 			}
 
 			/** Record the action log */
-			foreach ($selected_clients_ids as $client) {
-				$new_log_action = new LogActions();
-				$log_action_args = array(
-										'action' => $log_action_number,
-										'owner_id' => CURRENT_USER_ID,
-										'affected_account_name' => $all_users[$client]
-									);
-				$new_record_action = $new_log_action->log_action_save($log_action_args);
+			if ( !empty( $log_action_number ) ) {
+				foreach ($selected_clients_ids as $client) {
+					$new_log_action = new LogActions();
+					$log_action_args = array(
+											'action' => $log_action_number,
+											'owner_id' => CURRENT_USER_ID,
+											'affected_account_name' => $all_users[$client]
+										);
+					$new_record_action = $new_log_action->log_action_save($log_action_args);
+				}
 			}
+
+			/** Redirect after processing */
+			while (ob_get_level()) ob_end_clean();
+			$action_redirect = html_output($_POST['action']);
+			$location = BASE_URI . 'clients-requests.php?action=' . $action_redirect;
+			header("Location: $location");
+			die();
 		}
 		else {
 			$msg = __('Please select at least one client.','cftp_admin');
@@ -265,8 +275,6 @@ include('header.php');
 									$actions_options = array(
 															'none'				=> __('Select action','cftp_admin'),
 															'apply'				=> __('Apply selection','cftp_admin'),
-															//'approve_account'	=> __('Approve accounts only','cftp_admin'),
-															//'approve_all'		=> __('Approve accounts and memberships','cftp_admin'),
 															'delete'			=> __('Delete requests','cftp_admin'),
 														);
 									foreach ( $actions_options as $val => $text ) {
@@ -291,12 +299,12 @@ include('header.php');
 				<?php
 					$filters = array(
 									'new'		=> array(
-														'title'	=> __('New requests','cftp_admin'),
+														'title'	=> __('New account requests','cftp_admin'),
 														'link'	=> $this_page,
 														'count'	=> COUNT_CLIENTS_REQUESTS,
 													),
 									'denied'	=> array(
-														'title'	=> __('Denied','cftp_admin'),
+														'title'	=> __('Denied accounts','cftp_admin'),
 														'link'	=> $this_page . '?denied=1',
 														'count'	=> COUNT_CLIENTS_DENIED,
 													),
@@ -316,15 +324,15 @@ include('header.php');
 					if (isset($no_results_error)) {
 						switch ($no_results_error) {
 							case 'search':
-								$no_results_message = __('Your search keywords returned no results.','cftp_admin');;
+								$no_results_message = __('Your search keywords returned no results.','cftp_admin');
 								break;
 							case 'filter':
-								$no_results_message = __('The filters you selected returned no results.','cftp_admin');;
+								$no_results_message = __('The filters you selected returned no results.','cftp_admin');
 								break;
 						}
 					}
 					else {
-						$no_results_message = __('There are no clients at the moment','cftp_admin');;
+						$no_results_message = __('There are no requests at the moment','cftp_admin');
 					}
 					echo system_message('error',$no_results_message);
 				}
@@ -424,7 +432,7 @@ include('header.php');
 						/**
 						 * Checkbox on the first column
 						 */
-						$selectable = '<input name="accounts['.$row['id'].'][id]" value="'.$row['id'].'" type="checkbox" data-clientid="' . $client_id . '">';
+						$selectable = '<input name="accounts['.$row['id'].'][id]" value="'.$row['id'].'" type="checkbox" class="batch_checkbox" data-clientid="' . $client_id . '">';
 
 						/**
 						 * Checkbox for the account action
@@ -440,8 +448,8 @@ include('header.php');
 						/**
 						 * Checkboxes for every membership request
 						 */
-						if ( !empty( $get_requests[$row['id']] ) ) {
-							foreach ( $get_requests[$row['id']] as $request ) {
+						if ( !empty( $get_requests[$row['id']]['requests'] ) ) {
+							foreach ( $get_requests[$row['id']]['requests'] as $request ) {
 								$this_checkbox = $client_id . '_' . $request['id'];
 								$membership_requests .= '<div class="request_checkbox">
 															<label for="' . $this_checkbox . '">
@@ -514,4 +522,5 @@ include('header.php');
 	</div>
 </div>
 
-<?php include('footer.php'); ?>
+<?php
+	include('footer.php');

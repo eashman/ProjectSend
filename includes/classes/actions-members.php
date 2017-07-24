@@ -113,7 +113,7 @@ class MembersActions
 	function client_add_to_groups($arguments)
 	{
 		$this->client_id	= $arguments['client_id'];
-		$this->group_ids	= is_array( $arguments['group_ids'] ) ? $arguments['group_ids'] : array( $arguments['group_ids'] );;
+		$this->group_ids	= is_array( $arguments['group_ids'] ) ? $arguments['group_ids'] : array( $arguments['group_ids'] );
 		$this->added_by		= $arguments['added_by'];
 		
 		if ( in_array( CURRENT_USER_LEVEL, array(9,8) ) || ( defined('AUTOGROUP') ) ) {
@@ -148,7 +148,7 @@ class MembersActions
 	function client_edit_groups($arguments)
 	{
 		$this->client_id	= $arguments['client_id'];
-		$this->group_ids	= is_array( $arguments['group_ids'] ) ? $arguments['group_ids'] : array( $arguments['group_ids'] );;
+		$this->group_ids	= is_array( $arguments['group_ids'] ) ? $arguments['group_ids'] : array( $arguments['group_ids'] );
 		$this->added_by		= $arguments['added_by'];
 
 		if ( in_array( CURRENT_USER_LEVEL, array(9,8) ) ) {
@@ -219,7 +219,7 @@ class MembersActions
 		$this->requests->execute();
 		$this->requests_count = $this->requests->rowCount();
 		$this->results = array(
-								'requests' => array(),
+								'requests'	=> array(),
 							);
 		
 		if ( $this->requests_count > 0 ) {
@@ -230,10 +230,11 @@ class MembersActions
 			$this->get_groups = $this->groups->get_groups($this->arguments);
 
 			while ( $this->row = $this->requests->fetch() ) {
-				$this->results[$this->row['client_id']][] = array(
-																'id'	=> $this->row['group_id'],
-																'name'	=> $this->get_groups[$this->row['group_id']]['name'],
-															);
+				$this->results[$this->row['client_id']]['requests'][] = array(
+																			'id'	=> $this->row['group_id'],
+																			'name'	=> $this->get_groups[$this->row['group_id']]['name'],
+																		);
+				$this->results[$this->row['client_id']]['group_ids'][] = $this->row['group_id'];
 			}
 			
 			if ( !empty( $this->client_id ) ) {
@@ -323,18 +324,67 @@ class MembersActions
 		$this->client_id	= $arguments['client_id'];
 		$this->approve		= !empty( $arguments['approve'] ) ? $arguments['approve'] : '';
 		$this->deny_all		= !empty( $arguments['deny_all'] ) ? $arguments['deny_all'] : '';
-
+		
 		$this->get_requests_arguments = array(
 												'client_id'	=> $this->client_id,
 											);
 		$this->get_requests	= $this->get_membership_requests( $this->get_requests_arguments );
-		foreach ( $this->get_requests[$this->client_id] as $this->request ) {
-			/**
-			 * Process request
-			 */
+		$this->got_requests = $this->get_requests[$this->client_id]['group_ids'];
+
+		$this->return_info	= array(
+									'memberships'	=> array(
+															'approved'	=> array(),
+															'denied'	=> array(),
+														),
+								);
+		
+		/** Deny all */
+		if ( !empty( $this->deny_all ) && $this->deny_all == true ) {
+			$this->sql = $this->dbh->prepare('UPDATE ' . TABLE_MEMBERS_REQUESTS . ' SET denied=:denied WHERE client_id=:client_id');
+			$this->sql->bindValue(':denied', 1, PDO::PARAM_INT);
+			$this->sql->bindValue(':client_id', $this->client_id, PDO::PARAM_INT);
+			$this->status = $this->sql->execute();
 		}
 
+		/** Process individual requests */
+		if ( !empty( $this->approve ) ) {
+			foreach ( $this->got_requests as $this->request ) {
+				/**
+				 * Process request
+				 */
+				$this->requests_to_remove = array();
+				if ( in_array( $this->request, $this->approve ) ) {
+					/** Insert into memberships */
+					$statemente = $this->dbh->prepare("INSERT INTO " . TABLE_MEMBERS . " (added_by,client_id,group_id)"
+														." VALUES (:added_by, :client_id, :group_id)");
+					$statemente->bindValue(':added_by', 'SELFREGISTERED');
+					$statemente->bindValue(':client_id', $this->client_id, PDO::PARAM_INT);
+					$statemente->bindValue(':group_id', $this->request, PDO::PARAM_INT);
+					//$statemente->execute();
+					/** Add to delete from requests array */
+					$this->requests_to_remove[] = $this->request;
+					$this->return_info['memberships']['approved'][] = $this->request;
+				}
+				else {
+					/** Mark as denied */
+					$this->sql = $this->dbh->prepare('UPDATE ' . TABLE_MEMBERS_REQUESTS . ' SET denied=:denied WHERE client_id=:client_id AND group_id=:group_id');
+					$this->sql->bindValue(':denied', 1, PDO::PARAM_INT);
+					$this->sql->bindValue(':client_id', $this->client_id, PDO::PARAM_INT);
+					$this->sql->bindValue(':group_id', $this->request, PDO::PARAM_INT);
+					//$this->status = $this->sql->execute();
+					$this->return_info['memberships']['denied'][] = $this->request;
+				}
+			}
+			
+			if ( !empty( $this->requests_to_remove ) ) {
+				$this->delete_ids = implode( ',', $this->requests_to_remove );
+				$this->statement = $this->dbh->prepare("DELETE FROM " . TABLE_MEMBERS_REQUESTS . " WHERE client_id=:client_id AND FIND_IN_SET(group_id, :delete)");
+				$this->statement->bindParam(':client_id', $this->client_id, PDO::PARAM_INT);
+				$this->statement->bindParam(':delete', $this->delete_ids);
+				//$this->statement->execute();
+			}
+		}
+		
+		return $this->return_info;
 	}
 }
-
-?>

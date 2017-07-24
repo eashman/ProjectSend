@@ -20,33 +20,7 @@ $page_title = __('Clients Administration','cftp_admin');
 include('header.php');
 ?>
 
-<script type="text/javascript">
-	$(document).ready(function() {
-		$("#do_action").click(function() {
-			var checks = $("td>input:checkbox").serializeArray(); 
-			if (checks.length == 0) { 
-				alert('<?php _e('Please select at least one client to proceed.','cftp_admin'); ?>');
-				return false; 
-			} 
-			else {
-				var action = $('#action').val();
-				if (action == 'delete') {
-					var msg_1 = '<?php _e("You are about to delete",'cftp_admin'); ?>';
-					var msg_2 = '<?php _e("clients and all of the assigned files. Are you sure you want to continue?",'cftp_admin'); ?>';
-					if (confirm(msg_1+' '+checks.length+' '+msg_2)) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			}
-		});
-	});
-</script>
-
-<div id="main">
-	<h2><?php echo $page_title; ?></h2>
-	
+<div class="col-xs-12">
 <?php
 	/**
 	 * Apply the corresponding action to the selected clients.
@@ -247,15 +221,15 @@ include('header.php');
 					if (isset($no_results_error)) {
 						switch ($no_results_error) {
 							case 'search':
-								$no_results_message = __('Your search keywords returned no results.','cftp_admin');;
+								$no_results_message = __('Your search keywords returned no results.','cftp_admin');
 								break;
 							case 'filter':
-								$no_results_message = __('The filters you selected returned no results.','cftp_admin');;
+								$no_results_message = __('The filters you selected returned no results.','cftp_admin');
 								break;
 						}
 					}
 					else {
-						$no_results_message = __('There are no clients at the moment','cftp_admin');;
+						$no_results_message = __('There are no clients at the moment','cftp_admin');
 					}
 					echo system_message('error',$no_results_message);
 				}
@@ -346,6 +320,10 @@ include('header.php');
 													'hide'			=> 'phone,tablet',
 												),
 												*/
+												array(
+													'content'		=> __('View','cftp_admin'),
+													'hide'			=> 'phone',
+												),
 												array(
 													'content'		=> __('Actions','cftp_admin'),
 													'hide'			=> 'phone',
@@ -501,10 +479,13 @@ include('header.php');
 												*/
 												array(
 														'actions'		=> true,
-														'content'		=>  '<a href="' . $files_link . '" class="btn btn-sm ' . $files_button . '">' . __("Manage files","cftp_admin") . '</a>' . "\n" .
-																			'<a href="' . $groups_link . '" class="btn btn-sm ' . $groups_button . '">' . __("View groups","cftp_admin") . '</a>' . "\n" .
-																			'<a href="my_files/?client=' . html_output( $row["user"] ) . '" class="btn btn-primary btn-sm" target="_blank">' . __('View as client','cftp_admin') . '</a>' . "\n" .
-																			'<a href="clients-edit.php?id=' . html_output( $row["id"] ) . '" class="btn btn-primary btn-sm">' . __('Edit','cftp_admin') . '</a>' . "\n"
+														'content'		=>  '<a href="' . $files_link . '" class="btn btn-sm ' . $files_button . '">' . __("Files","cftp_admin") . '</a>' . "\n" .
+																			'<a href="' . $groups_link . '" class="btn btn-sm ' . $groups_button . '">' . __("Groups","cftp_admin") . '</a>' . "\n" .
+																			'<a href="my_files/?client=' . html_output( $row["user"] ) . '" class="btn btn-primary btn-sm" target="_blank">' . __('As client','cftp_admin') . '</a>' . "\n"
+													),
+												array(
+														'actions'		=> true,
+														'content'		=>  '<a href="clients-edit.php?id=' . html_output( $row["id"] ) . '" class="btn btn-primary btn-sm"><i class="fa fa-pencil"></i><span class="button_label">' . __('Edit','cftp_admin') . '</span></a>' . "\n"
 													),
 											);
 
@@ -533,4 +514,5 @@ include('header.php');
 	</div>
 </div>
 
-<?php include('footer.php'); ?>
+<?php
+	include('footer.php');

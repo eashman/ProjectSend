@@ -900,13 +900,13 @@ function generate_logo_url()
 
 	$logo_filename = LOGO_FILENAME;
 	if ( empty( $logo_filename ) ) {
-		$branding['filename'] = '/img/projectsend-logo.png';
+		$branding['filename'] = 'img/projectsend-logo.png';
 	}
 	else {
-		$branding['filename'] = '/img/custom/logo/'.LOGO_FILENAME;
+		$branding['filename'] = 'img/custom/logo/'.LOGO_FILENAME;
 	}
 
-	if (file_exists(ROOT_DIR.$branding['filename'])) {
+	if (file_exists(ROOT_DIR . '/' . $branding['filename'])) {
 		$branding['exists'] = true;
 		$branding['url'] = BASE_URI.$branding['filename'];
 	}
@@ -963,6 +963,17 @@ function meta_noindex()
 			echo '<meta name="robots" content="noindex">';
 		}
 	}
+}
+
+/**
+ * Favicon meta tags
+ */
+function meta_favicon()
+{
+	$favicon_location = BASE_URI . 'img/favicon/';
+	echo '<link rel="shortcut icon" type="image/x-icon" href="' . BASE_URI . 'favicon.ico" />' . "\n";
+	echo '<link rel="icon" type="image/png" href="' . $favicon_location . 'favicon-32.png" sizes="32x32">' . "\n";
+	echo '<link rel="apple-touch-icon" href="' . $favicon_location . 'favicon-152.png" sizes="152x152">' . "\n";
 }
 
 
@@ -1022,7 +1033,7 @@ function add_body_class( $custom = '' ) {
 	/** Remove query string */
 	$current_url = strtok( $_SERVER['REQUEST_URI'], '?' );
 	$classes = array('body');
-
+	
 	$pathinfo = pathinfo( $current_url );
 
 	if ( !empty( $pathinfo['extension'] ) ) {
@@ -1043,6 +1054,10 @@ function add_body_class( $custom = '' ) {
 	
 	if ( !empty( $custom ) && is_array( $custom ) ) {
 		$classes = array_merge( $classes, $custom );
+	}
+
+	if ( !in_array('template-default', $classes ) ) {
+		$classes[] = 'backend';
 	}
 
 	$classes = array_filter( array_unique( $classes ) );
@@ -1349,4 +1364,3 @@ function render_log_action($params)
 	
 	return $log;
 }
-?>

@@ -13,6 +13,7 @@
  *
  * @return array
  */
+global $dbh;
 $options_values = array();
 try {
 	$options = $dbh->query("SELECT * FROM " . TABLE_OPTIONS);
@@ -223,7 +224,7 @@ if(!empty($options_values)) {
 	/**
 	 * For versions 757 and up
 	 */	
-	if (isset($options_values['clients_auto_approve'])) {
+	if (isset($options_values['clients_can_set_expiration_date'])) {
 		define('CLIENTS_CAN_SET_EXPIRATION_DATE',$options_values['clients_can_set_expiration_date']);
 	}
 
@@ -278,6 +279,23 @@ if(!empty($options_values)) {
 	}
 
 	/**
+	 * For versions 950 and up
+	 */	
+	if (isset($options_values['email_account_approve_subject'])) {
+		/** Checkboxes */
+		define('EMAILS_ACCOUNT_APPROVE_USE_SUBJECT_CUSTOM',$options_values['email_account_approve_subject_customize']);
+		define('EMAILS_ACCOUNT_DENY_USE_SUBJECT_CUSTOM',$options_values['email_account_deny_subject_customize']);
+		define('EMAILS_ACCOUNT_APPROVE_USE_CUSTOM',$options_values['email_account_approve_customize']);
+		define('EMAILS_ACCOUNT_DENY_USE_CUSTOM',$options_values['email_account_deny_customize']);
+		/** Subjects */
+		define('EMAILS_ACCOUNT_APPROVE_SUBJECT',$options_values['email_account_approve_subject']);
+		define('EMAILS_ACCOUNT_DENY_SUBJECT',$options_values['email_account_deny_subject']);
+		/** Email texts */
+		define('EMAILS_ACCOUNT_APPROVE_TEXT',$options_values['email_account_approve_text']);
+		define('EMAILS_ACCOUNT_DENY_TEXT',$options_values['email_account_deny_text']);
+	}
+
+	/**
 	 * Set the default timezone based on the value of the Timezone select box
 	 * of the options page.
 	 */
@@ -292,6 +310,9 @@ if(!empty($options_values)) {
 if (defined('BASE_URI')) {
 	define('TIMTHUMB_URL',BASE_URI.'includes/timthumb/timthumb.php');
 	define('TIMTHUMB_ABS',ROOT_DIR.'/includes/timthumb/timthumb.php');
+
+	define('WIDGETS_URL',BASE_URI.'includes/widgets/');
+	define('WIDGETS_FOLDER',ROOT_DIR.'/includes/widgets/');
 }
 
 /**
@@ -307,4 +328,3 @@ if (!defined('RESULTS_PER_PAGE')) {
 	define('RESULTS_PER_PAGE', '10');
 	define('RESULTS_PER_PAGE_LOG', '15');
 }
-?>

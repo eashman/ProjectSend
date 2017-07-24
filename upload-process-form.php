@@ -15,6 +15,8 @@
  * @package ProjectSend
  * @subpackage Upload
  */
+define('IS_FILE_EDITOR', true);
+
 $load_scripts	= array(
 						'datepicker',
 						'footable',
@@ -33,8 +35,7 @@ include('header.php');
 define('CAN_INCLUDE_FILES', true);
 ?>
 
-<div id="main">
-	<h2><?php echo $page_title; ?></h2>
+<div class="col-xs-12">
 
 <?php
 /**
@@ -50,7 +51,7 @@ if(isset($_POST['finished_files'])) {
 	$uploaded_files = array_filter($_POST['finished_files']);
 }
 /** Coming from upload by FTP */
-if(isset($_POST['add'])) {
+if ( isset($_POST['add'] ) ) {
 	$uploaded_files = $_POST['add'];
 }
 
@@ -312,7 +313,7 @@ while( $row = $statement->fetch() ) {
 			?>
 					<tr>
 						<td><?php echo html_output($uploaded['name']); ?></td>
-						<td><?php echo html_output($uploaded['description']); ?></td>
+						<td><?php echo htmlentities_allowed($uploaded['description']); ?></td>
 						<td><?php echo html_output($uploaded['file']); ?></td>
 						<?php
 							if ($current_level != 0) {
@@ -338,7 +339,7 @@ while( $row = $statement->fetch() ) {
 									<?php
 										if ($uploaded['public'] == '1') {
 									?>
-											<a href="javascript:void(0);" class="btn btn-primary btn-sm public_link" data-id="<?php echo $uploaded['file_id']; ?>" data-token="<?php echo html_output($uploaded['public_token']); ?>" data-placement="top" data-toggle="popover" data-original-title="<?php _e('Public URL','cftp_admin'); ?>">
+											<a href="javascript:void(0);" class="btn btn-primary btn-sm public_link" data-id="<?php echo $uploaded['file_id']; ?>" data-token="<?php echo html_output($uploaded['public_token']); ?>">
 									<?php
 										}
 										else {
@@ -356,7 +357,9 @@ while( $row = $statement->fetch() ) {
 							}
 						?>
 						<td>
-							<a href="edit-file.php?file_id=<?php echo html_output($uploaded['new_file_id']); ?>" class="btn-primary btn btn-sm"><?php _e('Edit file','cftp_admin'); ?></a>
+							<a href="edit-file.php?file_id=<?php echo html_output($uploaded['new_file_id']); ?>" class="btn-primary btn btn-sm">
+								<i class="fa fa-pencil"></i><span class="button_label"><?php _e('Edit file','cftp_admin'); ?></span>
+							</a>
 							<?php
 								/*
 								 * Show the "My files" button only to clients
@@ -421,8 +424,9 @@ while( $row = $statement->fetch() ) {
 		<form action="upload-process-form.php" name="save_files" id="save_files" method="post">
 			<?php
 				foreach($uploaded_files as $add_uploaded_field) {
-					echo '<input type="hidden" name="finished_files[]" value="'.$add_uploaded_field.'" />
-					';
+			?>
+					<input type="hidden" name="finished_files[]" value="<?php echo $add_uploaded_field; ?>" />
+			<?php
 				}
 			?>
 			
@@ -705,38 +709,6 @@ while( $row = $statement->fetch() ) {
 		<?php
 			if(!empty($uploaded_files)) {
 		?>
-				$('.chosen-select').chosen({
-					no_results_text	: "<?php _e('No results where found.','cftp_admin'); ?>",
-					width			: "98%",
-					search_contains	: true
-				});
-
-				$('.date-container .date-field').datepicker({
-					format			: 'dd-mm-yyyy',
-					autoclose		: true,
-					todayHighlight	: true
-				});
-
-				$('.add-all').click(function(){
-					var type = $(this).data('type');
-					var selector = $(this).closest('.' + type).find('select');
-					$(selector).find('option').each(function(){
-						$(this).prop('selected', true);
-					});
-					$('select').trigger('chosen:updated');
-					return false;
-				});
-		
-				$('.remove-all').click(function(){
-					var type = $(this).data('type');
-					var selector = $(this).closest('.' + type).find('select');
-					$(selector).find('option').each(function(){
-						$(this).prop('selected', false);
-					});
-					$('select').trigger('chosen:updated');
-					return false;
-				});
-
 				$('.copy-all').click(function() {
 					if ( confirm( "<?php _e('Copy selection to all files?','cftp_admin'); ?>" ) ) {
 						var type = $(this).data('type');
@@ -763,46 +735,13 @@ while( $row = $statement->fetch() ) {
 					return false;
 				});
 
-				<?php
-					/** CKEditor only avaiable if the option is enabled */
-					if ( DESCRIPTIONS_USE_CKEDITOR == '1' ) {
-				?>
-						CKEDITOR.replaceAll( 'ckeditor' );
-				<?php
-					}
-				?>
-
 				// Autoclick the continue button
 				//$('#upload-continue').click();
 		<?php
 			}
 		?>
-
-		$('.public_link').popover({ 
-			html : true,
-			content: function() {
-				var id		= $(this).data('id');
-				var token	= $(this).data('token');
-				return '<strong><?php _e('Click to select','cftp_admin'); ?></strong><textarea class="input-large public_link_copy" rows="4"><?php echo BASE_URI; ?>download.php?id=' + id + '&token=' + token + '</textarea><small><?php _e('Send this URL to someone to download the file without registering or logging in.','cftp_admin'); ?></small><div class="close-popover"><button type="button" class="btn btn-inverse btn-sm"><?php _e('Close','cftp_admin'); ?></button></div>';
-			}
-		});
-
-		$(".col_visibility").on('click', '.close-popover button', function(e) {
-			var popped = $(this).parents('.col_visibility').find('.public_link');
-			popped.popover('hide');
-		});
-
-		$(".col_visibility").on('click', '.public_link_copy', function(e) {
-			$(this).select();
-			$(this).mouseup(function() {
-				$(this).unbind("mouseup");
-				return false;
-			});
-		});
-
 	});
 </script>
 
 <?php
 	include('footer.php');
-?>

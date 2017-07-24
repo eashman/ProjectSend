@@ -78,7 +78,7 @@ if ( !isset( $body_class ) ) { $body_class = ''; }
 	<?php meta_noindex(); ?>
 
 	<title><?php echo html_output( $header_vars['title'] ); ?></title>
-	<link rel="shortcut icon" href="<?php echo BASE_URI; ?>favicon.ico" />
+	<?php meta_favicon(); ?>
 	<script src="<?php echo BASE_URI; ?>includes/js/jquery.1.12.4.min.js"></script>
 
 	<!--[if lt IE 9]>
@@ -87,6 +87,7 @@ if ( !isset( $body_class ) ) { $body_class = ''; }
 	<![endif]-->
 
 	<?php
+		$load_theme_css = true;
 		require_once( 'assets.php' );
 
 		load_css_files();
@@ -94,12 +95,15 @@ if ( !isset( $body_class ) ) { $body_class = ''; }
 </head>
 
 <body <?php echo add_body_class( $body_class ); ?>>
-	<header>
-		<div id="header" class="header_shadow">
-			<div id="lonely_logo">
-				<h1><?php echo $header_vars['header_title']; ?></h1>
+	<div class="container-custom">
+		<header id="header" class="navbar navbar-static-top navbar-fixed-top header_unlogged">
+			<div class="navbar-header text-center">
+				<span class="navbar-brand">
+					<?php echo $header_vars['header_title']; ?>
+				</span>
 			</div>
-		</div>
-	</header>
+		</header>
 
-	<div id="main">
+		<div class="main_content_unlogged">
+			<div class="container-fluid">
+				<div class="row">

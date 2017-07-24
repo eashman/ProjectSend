@@ -1,13 +1,19 @@
 <?php
 /*
-Template name:
-Gallery
+Template name: Gallery
+URI: http://www.projectsend.org/templates/gallery
+Author: ProjectSend
+Author URI: http://www.projectsend.org/
+Author e-mail: contact@projectsend.org
+Description: Shows only images (jpg, gif, and png). Do not use if you plan to upload other file types! They will not be shown.
 
 Background modified from: http://www.artofadambetts.com/weblog/2008/05/black-leather-apple-desktop-background/
 Delete icon: http://www.iconfinder.com/icondetails/37519/16/can_delete_trash_icon
 */
 
 $ld = 'cftp_template_gallery'; // specify the language domain for this template
+
+define('TEMPLATE_RESULTS_PER_PAGE', -1);
 
 if ( !empty( $_GET['category'] ) ) {
 	$category_filter = $_GET['category'];
@@ -37,7 +43,7 @@ $count = count($img_files);
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title><?php echo html_output( $client_info['name'].' | '.$window_title . ' &raquo; ' . SYSTEM_NAME ); ?></title>
-	<link rel="shortcut icon" href="<?php echo BASE_URI; ?>/favicon.ico" />
+	<?php meta_favicon(); ?>
 
 	<link rel="stylesheet" href="<?php echo $this_template; ?>/font-awesome-4.6.3/css/font-awesome.min.css">
 	<script src="<?php echo PROTOCOL; ?>://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js" type="text/javascript"></script>

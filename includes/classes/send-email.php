@@ -28,6 +28,8 @@ define('EMAIL_TEMPLATE_FOOTER', 'footer.html');
 define('EMAIL_TEMPLATE_NEW_CLIENT', 'new-client.html');
 define('EMAIL_TEMPLATE_NEW_CLIENT_SELF', 'new-client-self.html');
 define('EMAIL_TEMPLATE_NEW_USER', 'new-user.html');
+define('EMAIL_TEMPLATE_ACCOUNT_APPROVE', 'account-approve.html');
+define('EMAIL_TEMPLATE_ACCOUNT_DENY', 'account-deny.html');
 define('EMAIL_TEMPLATE_NEW_FILE_BY_USER', 'new-file-for-client.html');
 define('EMAIL_TEMPLATE_NEW_FILE_BY_CLIENT', 'new-file-by-client.html');
 define('EMAIL_TEMPLATE_PASSWORD_RESET', 'password-reset.html');
@@ -88,6 +90,24 @@ $email_strings_new_client_self = array(
 								}
 
 
+/** Strings for the "Account approved" e-mail */
+$email_strings_account_approved = array(
+									'subject'			=> ( defined('EMAILS_ACCOUNT_APPROVE_USE_SUBJECT_CUSTOM' ) && EMAILS_ACCOUNT_APPROVE_USE_SUBJECT_CUSTOM == 1 && defined( 'EMAILS_ACCOUNT_APPROVE_SUBJECT' ) ) ? EMAILS_ACCOUNT_APPROVE_SUBJECT : __('You account has been approved','cftp_admin'),
+									'body'				=> __('Your account has been approved.','cftp_admin'),
+									'title_memberships'	=> __('Additionally, your group membership requests have been processed.','cftp_admin'),
+									'title_approved'	=> __('Approved requests:','cftp_admin'),
+									'title_denied'		=> __('Denied requests:','cftp_admin'),
+									'body2'				=> __('You can log in following this link','cftp_admin'),
+									'body3'				=> __('Please contact the administrator if you need further assistance.','cftp_admin')
+								);
+
+/** Strings for the "Account denied" e-mail */
+$email_strings_account_denied = array(
+									'subject'		=> ( defined('EMAILS_ACCOUNT_DENY_USE_SUBJECT_CUSTOM' ) && EMAILS_ACCOUNT_DENY_USE_SUBJECT_CUSTOM == 1 && defined( 'EMAILS_ACCOUNT_DENY_SUBJECT' ) ) ? EMAILS_ACCOUNT_DENY_SUBJECT : __('You account has been denied','cftp_admin'),
+									'body'			=> __('Your account request has been denied.','cftp_admin'),
+									'body2'			=> __('Please contact the administrator if you need further assistance.','cftp_admin')
+								);
+
 /** Strings for the "New system user created" e-mail */
 $email_strings_new_user = array(
 									'subject'		=> ( defined('EMAILS_NEW_USER_USE_SUBJECT_CUSTOM' ) && EMAILS_NEW_USER_USE_SUBJECT_CUSTOM == 1 && defined( 'EMAILS_NEW_USER_SUBJECT' ) ) ? EMAILS_NEW_USER_SUBJECT : __('Welcome to the K2P FileTool','cftp_admin'),
@@ -131,6 +151,16 @@ class PSend_Email
 					$filename	= EMAIL_TEMPLATE_NEW_CLIENT_SELF;
 					$body_check	= (!defined('EMAILS_CLIENT_BY_SELF_USE_CUSTOM') || EMAILS_CLIENT_BY_SELF_USE_CUSTOM == '0') ? '0' : EMAILS_CLIENT_BY_SELF_USE_CUSTOM;
 					$body_text	= EMAILS_CLIENT_BY_SELF_TEXT;
+				break;
+			case 'client_approve':
+					$filename	= EMAIL_TEMPLATE_ACCOUNT_APPROVE;
+					$body_check	= (!defined('EMAILS_ACCOUNT_APPROVE_USE_CUSTOM') || EMAILS_ACCOUNT_APPROVE_USE_CUSTOM == '0') ? '0' : EMAILS_ACCOUNT_APPROVE_USE_CUSTOM;
+					$body_text	= EMAILS_ACCOUNT_APPROVE_TEXT;
+				break;
+			case 'client_deny':
+					$filename	= EMAIL_TEMPLATE_ACCOUNT_DENY;
+					$body_check	= (!defined('EMAILS_ACCOUNT_DENY_USE_CUSTOM') || EMAILS_ACCOUNT_DENY_USE_CUSTOM == '0') ? '0' : EMAILS_ACCOUNT_DENY_USE_CUSTOM;
+					$body_text	= EMAILS_ACCOUNT_DENY_TEXT;
 				break;
 			case 'new_user':
 					$filename	= EMAIL_TEMPLATE_NEW_USER;
@@ -265,6 +295,95 @@ class PSend_Email
 		}
 		return array(
 					'subject' => $email_strings_new_client_self['subject'],
+					'body' => $this->email_body
+				);
+	}
+
+	/**
+	 * Prepare the body for the "Account approved" e-mail.
+	 * Also sends the memberships requests approval status.
+	 */
+	function email_account_approve($username,$name,$memberships_requests)
+	{
+		global $email_strings_account_approved;
+		$requests_title_replace = false;
+		
+		$this->groups = new GroupActions();
+		$this->get_args = array();
+		$this->get_groups = $this->groups->get_groups( $this->get_args );
+
+		if ( !empty( $memberships_requests['approved'] ) ) {
+			$requests_title_replace = true;
+			$approved_title = '<p>'.$email_strings_account_approved['title_approved'].'</p>';
+			// Make the list
+			$approved_list = '<ul>';
+			foreach ( $memberships_requests['approved'] as $group_id ) {
+				$approved_list .= '<li style="list-style:disc;">' . $this->get_groups[$group_id]['name'] . '</li>';
+			}
+			$approved_list .= '</ul><hr>';
+		}
+		else {
+			$approved_list =  '';
+			$approved_title = '';
+		}
+		if ( !empty( $memberships_requests['denied'] ) ) {
+			$requests_title_replace = true;
+			$denied_title = '<p>'.$email_strings_account_approved['title_denied'].'</p>';
+			// Make the list
+			$denied_list = '<ul>';
+			foreach ( $memberships_requests['denied'] as $group_id ) {
+				$denied_list .= '<li style="list-style:disc;">' . $this->get_groups[$group_id]['name'] . '</li>';
+			}
+			$denied_list .= '</ul><hr>';
+		}
+		else {
+			$denied_list =  '';
+			$denied_title = '';
+		}
+		
+		$requests_title = ( $requests_title_replace == true ) ? '<p>'.$email_strings_account_approved['title_approved'].'</p>' : '';
+
+		$this->email_body = $this->email_prepare_body('client_approve');
+		$this->email_body = str_replace(
+									array('%SUBJECT%','%BODY1%', '%REQUESTS_TITLE%', '%APPROVED_TITLE%','%GROUPS_APPROVED%','%DENIED_TITLE%','%GROUPS_DENIED%','%BODY2%','%BODY3%','%URI%'),
+									array(
+										$email_strings_account_approved['subject'],
+										$email_strings_account_approved['body'],
+										'<p>'.$email_strings_account_approved['title_memberships'].'</p>',
+										$approved_title,
+										$approved_list,
+										$denied_title,
+										$denied_list,
+										$email_strings_account_approved['body2'],
+										$email_strings_account_approved['body3'],
+										BASE_URI
+									),
+									$this->email_body
+								);
+		return array(
+					'subject' => $email_strings_account_approved['subject'],
+					'body' => $this->email_body
+				);
+	}
+
+	/**
+	 * Prepare the body for the "Account denied" e-mail.
+	 */
+	function email_account_deny($username,$name)
+	{
+		global $email_strings_account_denied;
+		$this->email_body = $this->email_prepare_body('client_deny');
+		$this->email_body = str_replace(
+									array('%SUBJECT%','%BODY1%','%BODY2%'),
+									array(
+										$email_strings_account_denied['subject'],
+										$email_strings_account_denied['body'],
+										$email_strings_account_denied['body2'],
+									),
+									$this->email_body
+								);
+		return array(
+					'subject' => $email_strings_account_denied['subject'],
 					'body' => $this->email_body
 				);
 	}
@@ -430,6 +549,12 @@ class PSend_Email
 			case 'new_client_self':
 				$this->mail_info = $this->email_new_client_self($this->username,$this->name,$this->memberships);
 			break;
+			case 'client_approve':
+				$this->mail_info = $this->email_account_approve($this->username,$this->name,$this->memberships);
+			break;
+			case 'client_deny':
+				$this->mail_info = $this->email_account_deny($this->username,$this->name);
+			break;
 			case 'new_user':
 				$this->mail_info = $this->email_new_user($this->username,$this->password);
 			break;
@@ -468,14 +593,17 @@ class PSend_Email
 			switch (MAIL_SYSTEM) {
 				case 'smtp':
 						$this->send_mail->IsSMTP();
-						$this->send_mail->SMTPAuth = true;
 						$this->send_mail->Host = SMTP_HOST;
 						$this->send_mail->Port = SMTP_PORT;
 						$this->send_mail->Username = SMTP_USER;
 						$this->send_mail->Password = SMTP_PASS;
 						
 						if ( defined('SMTP_AUTH') && SMTP_AUTH != 'none' ) {
+							$this->send_mail->SMTPAuth = true;
 							$this->send_mail->SMTPSecure = SMTP_AUTH;
+						}
+						else {
+							$this->send_mail->SMTPAuth = false;
 						}
 					break;
 				case 'gmail':
@@ -545,4 +673,3 @@ class PSend_Email
 		}
 	}
 }
-?>

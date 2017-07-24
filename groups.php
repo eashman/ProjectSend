@@ -16,7 +16,7 @@ require_once('sys.includes.php');
 
 $active_nav = 'groups';
 
-$page_title = __('Groups administration','cftp_admin');;
+$page_title = __('Groups administration','cftp_admin');
 
 /**
  * Used when viewing groups a certain client belongs to.
@@ -53,37 +53,9 @@ if(!empty($_GET['member'])) {
 }
 
 include('header.php');
-
-
 ?>
 
-<script type="text/javascript">
-	$(document).ready( function() {
-		$("#do_action").click(function() {
-			var checks = $("td>input:checkbox").serializeArray(); 
-			if (checks.length == 0) { 
-				alert('<?php _e('Please select at least one group to proceed.','cftp_admin'); ?>');
-				return false; 
-			}
-			else {
-				var action = $('#action').val();
-				if (action == 'delete') {
-					var msg_1 = '<?php _e("You are about to delete",'cftp_admin'); ?>';
-					var msg_2 = '<?php _e("groups. Are you sure you want to continue?",'cftp_admin'); ?>';
-					if (confirm(msg_1+' '+checks.length+' '+msg_2)) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			}
-		});
-
-	});
-</script>
-
-<div id="main">
-	<h2><?php echo $page_title; ?></h2>
+<div class="col-xs-12">
 
 <?php
 
@@ -273,21 +245,21 @@ include('header.php');
 				if (isset($no_results_error)) {
 					switch ($no_results_error) {
 						case 'search':
-							$no_results_message = __('Your search keywords returned no results.','cftp_admin');;
+							$no_results_message = __('Your search keywords returned no results.','cftp_admin');
 							break;
 						case 'filter':
-							$no_results_message = __('The filters you selected returned no results.','cftp_admin');;
+							$no_results_message = __('The filters you selected returned no results.','cftp_admin');
 							break;
 						case 'client_not_exists':
-							$no_results_message = __('The client does not exist.','cftp_admin');;
+							$no_results_message = __('The client does not exist.','cftp_admin');
 							break;
 						case 'is_not_member':
-							$no_results_message = __('There are no groups where this client is member.','cftp_admin');;
+							$no_results_message = __('There are no groups where this client is member.','cftp_admin');
 							break;
 					}
 				}
 				else {
-					$no_results_message = __('There are no groups created yet.','cftp_admin');;
+					$no_results_message = __('There are no groups created yet.','cftp_admin');
 				}
 				echo system_message('error',$no_results_message);
 			}
@@ -347,6 +319,10 @@ include('header.php');
 												'hide'			=> 'phone',
 											),
 											array(
+												'content'		=> __('View','cftp_admin'),
+												'hide'			=> 'phone',
+											),
+											array(
 												'content'		=> __('Actions','cftp_admin'),
 												'hide'			=> 'phone',
 											),
@@ -362,7 +338,19 @@ include('header.php');
 					 * 1- Get account creation date
 					 */
 					$date = date(TIMEFORMAT_USE,strtotime($row['timestamp']));
-
+					
+					/**
+					 * 2- Button class for the manage files link
+					 */
+					if ( isset( $files_amount[$row['id']] ) ) {
+						$files_link	= 'manage-files.php?group_id=' . html_output( $row["id"] );
+						$files_btn	= 'btn-primary';
+					}
+					else {
+						$files_link	= '#';
+						$files_btn	= 'btn-default disabled';
+					}
+					
 					/**
 					 * Add the cells to the row
 					 */
@@ -394,8 +382,11 @@ include('header.php');
 												),
 											array(
 													'actions'		=> true,
-													'content'		=> '<a href="manage-files.php?group_id=' . html_output( $row["id"] ) . '" class="btn btn-primary btn-sm">' . __('Manage files','cftp_admin') . '</a>' . "\n" .
-																		'<a href="groups-edit.php?id=' . html_output( $row["id"] ) . '" class="btn btn-primary btn-sm">' . __('Edit','cftp_admin') . '</a>' . "\n"
+													'content'		=> '<a href="' . $files_link . '" class="btn ' . $files_btn . ' btn-sm">' . __('Files','cftp_admin') . '</a>',
+												),
+											array(
+													'actions'		=> true,
+													'content'		=> '<a href="groups-edit.php?id=' . html_output( $row["id"] ) . '" class="btn btn-primary btn-sm"><i class="fa fa-pencil"></i><span class="button_label">' . __('Edit','cftp_admin') . '</span></a>' . "\n"
 												),
 										);
 
@@ -426,4 +417,5 @@ include('header.php');
 	
 </div>
 
-<?php include('footer.php'); ?>
+<?php
+	include('footer.php');
